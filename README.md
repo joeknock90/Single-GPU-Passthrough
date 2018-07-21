@@ -200,7 +200,7 @@ modprobe -a nvidia
 # Remove the GPU completely
 echo 1 | tee /sys/bus/pci/devices/0000:01:00.0/remove
 echo 1 | tee /sys/bus/pci/devices/0000:01:00.1/remove
-# Rescan for the GPU which automatically rebinds to VFIO pci
+# Rescan for the GPU which automatically rebinds to nvidia driver
 echo 1 | tee /sys/bus/pci/rescan
 
 sleep 1
