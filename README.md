@@ -48,6 +48,16 @@ https://github.com/andre-richter/vfio-pci-bind
 
 Thanks andre-richter!
 
+#### Nvidia ROM patcher
+
+If you're using an nvidia card, you'll need to include a patched ROM file in your libvirt.xml so that the machine doesn't see a GPU that's already been initialized. There are some pre patched roms around, but we'll patch ours ourselves.
+
+Tools and instructions found here:
+
+https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
+
+Thanks Matoking!
+
 **Optional**
 
 Another machine to ssh into your host with for testing. Chances are, like everything in VFIO, you're going to need to adjust things.
@@ -60,6 +70,8 @@ Another machine to ssh into your host with for testing. Chances are, like everyt
 
 2. Ensure the groups are valid.
 	Yeah. We'll assmue that's the case
+
+
 
 3. Isolate the GPU.
 	**Well let's hold on there just a moment.**
@@ -74,6 +86,40 @@ Another machine to ssh into your host with for testing. Chances are, like everyt
 	Currently I'm using 2 qcow2 drives. One for Windows, and one to store Games. Reason being is it's not a huge deal if I lose the games drive, as I can just redownload those making the windows drive smaller and easier to back up so I don't have to go through the installation process again if I bork the host in another project.
 
 	You can do whatever perfomance optimiztions you want to the host here as well. CPU pinning and/or hugepages for ram. I suggest both as they have given me moderate performance gains.
+
+	5. Patching the Boot GPU rom.
+
+
+### Patching GPU ROM
+
+First we need an unpatched rom for your video card. You can either use the nvidia_flasher util which I am not providing a link to here, or you can download a rom for your video card from techpowerup here:
+
+https://www.techpowerup.com/vgabios/
+
+After getting that. We'll use nvidia_vbios_vfio_patcher to patch it. Following the instruction on the github page:
+
+````
+python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
+````
+
+Now we have a patched rom. We'll save that somewhere safe. I put it in a folder I created called
+
+````/var/lib/libvirt/vbios/````
+
+After attaching the GPU to the VM in Libvirt, find the hostdev corresponding to your GPU in the Libvirt XML, and add the line for the rom file telling it where it is. 
+
+````
+sudo virsh edit {VM Name}
+````
+````
+<hostdev>
+	...
+	<rom file='/var/lib/libvirt/vbios/patched-bios.bin'/>
+	...
+</hostdev>
+````
+
+
 
 ### Libvirt Hooks
 
