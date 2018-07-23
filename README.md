@@ -106,7 +106,7 @@ Now we have a patched rom. We'll save that somewhere safe. I put it in a folder 
 
 ````/var/lib/libvirt/vbios/````
 
-After attaching the GPU to the VM in Libvirt, find the hostdev corresponding to your GPU in the Libvirt XML, and add the line for the rom file telling it where it is. 
+After attaching the GPU to the VM in Libvirt, find the hostdev corresponding to your GPU in the Libvirt XML, and add the line for the rom file telling it where it is.
 
 ````
 sudo virsh edit {VM Name}
@@ -161,28 +161,42 @@ So let's make this work for us by creating a script that:
 4. Binds the GPU to VFIO.
 
 ## Here's basically how I unbind the GPU automatically
+#### Make sure you replace the first line with whatever your display manager is
+i.e. Lightdm.service, sddm.service, etc.
 
 ``` start.sh
 # Stop all X services
-systemctl stop lightdm.service
+systemctl stop display-manager.service
 systemctl stop ckb-daemon
+
+
 # Load VFIO kernel modules
 modprobe vfio
 modprobe vfio-pci
+
+
 # Unbind Virtual Consoles
 echo 'Unbinding vtconsole'
 echo 0 | tee /sys/class/vtconsole/vtcon0/bind
 echo 0 | tee /sys/class/vtconsole/vtcon1/bind
+
+
 # Unbind EFI-Framebuffer
 echo 'Unbinding efi-framebuffer'
 echo efi-framebuffer.0 | tee /sys/bus/platform/drivers/efi-framebuffer/unbind
+
+
 # Unbind Nvidia Driver
 echo 'unbind nvidia driver'
 /usr/local/bin/vfio-pci-bind "0000:01:00.0"
+
+
 # Remove Nvidia Drivers
 modprobe -r nvidia_drm
 modprobe -r nvidia_modeset
 modprobe -r nvidia
+
+
 # Wait a second
 sleep 1
 ```
@@ -210,11 +224,11 @@ echo 1 | tee /sys/class/vtconsole/vtcon0/bind
 echo 1 | tee /sys/class/vtconsole/vtcon1/bind
 
 #restart lightdm
-systemctl start lightdm.service
+systemctl start display-manager.service
 systemctl start ckb-daemon.service
 ```
 
-Here is very simple. We remove the GPU completely from the PCI bus, and then rescan for it, which will automatically rebind it to the appropriate video driver (in my case Nvidia)
+This script is a bit more simple. We remove the GPU completely from the PCI bus, and then rescan for it, which will automatically rebind it to the appropriate video driver (in my case Nvidia)
 
 At the end it restarts my display manager for me and brings it back up and running.
 
