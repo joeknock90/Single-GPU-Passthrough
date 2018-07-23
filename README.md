@@ -1,5 +1,9 @@
 # Single GPU PCI Passthrough on Linux
 
+### Tested by me on Fedora 28 and Arch linux
+#### Currently only works with 10 Series GPUs (as far as I know).
+#### Want to help? You should help. Please help. Make a pull request!
+
 ### Disclaimer
 My qualifications:
 
