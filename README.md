@@ -62,8 +62,12 @@ Thanks Matoking!
 
 Another machine to ssh into your host with for testing. Chances are, like everything in VFIO, you're going to need to adjust things.
 
-
 ### Procedure
+
+To get PCI Passthrough working reference this document from the Arch Wiki.
+https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
+
+Using this guide we are going to stop before "Isolating the GPU" section.
 
 1. Enable IOMMU
 	It goes without saying that you still need to do this
@@ -71,23 +75,21 @@ Another machine to ssh into your host with for testing. Chances are, like everyt
 2. Ensure the groups are valid.
 	Yeah. We'll assmue that's the case
 
-
-
 3. Isolate the GPU.
 	**Well let's hold on there just a moment.**
 
 	We don't really want to Isolate the gpu from the system entirely. So let's skip this step.
 
 4. OVMF Libvirt Guest
-	Go ahead and setup libvirt to use OVMF. We're going to need it for what we are doing with hotswapping the GPU.
+	Go ahead and setup libvirt to use OVMF. We're going to need it for what we are doing with hot-swapping the GPU.
 
 	Setup a Windows VM with no devices passed through.
 
 	Currently I'm using 2 qcow2 drives. One for Windows, and one to store Games. Reason being is it's not a huge deal if I lose the games drive, as I can just redownload those making the windows drive smaller and easier to back up so I don't have to go through the installation process again if I bork the host in another project.
 
-	You can do whatever perfomance optimiztions you want to the host here as well. CPU pinning and/or hugepages for ram. I suggest both as they have given me moderate performance gains.
-
-	5. Patching the Boot GPU rom.
+	You can do whatever performance optimizations you want to the host here as well. CPU pinning and/or hugepages for ram. I suggest both as they have given me moderate performance gains.
+5. Patching the Boot GPU rom.
+6. Working around code 43: See here: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#.22Error_43:_Driver_failed_to_load.22_on_Nvidia_GPUs_passed_to_Windows_VMs
 
 
 ### Patching GPU ROM
