@@ -173,7 +173,6 @@ i.e. Lightdm.service, sddm.service, etc.
 ``` start.sh
 # Stop all X services
 systemctl stop display-manager.service
-systemctl stop ckb-daemon
 
 
 # Load VFIO kernel modules
@@ -216,12 +215,21 @@ I leave the sleep 1 at the end due to a race condition that I ran into a few tim
 ``` revert.sh
 #!/bin/sh
 # Reload the driver
+
+
 modprobe -a nvidia
+
+
 # Remove the GPU completely
+
+
 echo 1 | tee /sys/bus/pci/devices/0000:01:00.0/remove
 echo 1 | tee /sys/bus/pci/devices/0000:01:00.1/remove
+
+
 # Rescan for the GPU which automatically rebinds to nvidia driver
 echo 1 | tee /sys/bus/pci/rescan
+
 
 sleep 1
 
@@ -229,9 +237,9 @@ sleep 1
 echo 1 | tee /sys/class/vtconsole/vtcon0/bind
 echo 1 | tee /sys/class/vtconsole/vtcon1/bind
 
+
 #restart lightdm
 systemctl start display-manager.service
-systemctl start ckb-daemon.service
 ```
 
 This script is a bit more simple. We remove the GPU completely from the PCI bus, and then rescan for it, which will automatically rebind it to the appropriate video driver (in my case Nvidia)
