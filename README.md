@@ -1,118 +1,117 @@
-# Single GPU PCI Passthrough on Linux
+# Single GPU Passthrough on Linux  
 
-### Tested by me on Fedora 28 and Arch linux
-#### Currently only works with 10 Series GPUs (as far as I know).
-#### Want to help? You should help. Please help. Make a pull request!
+### Tested on Fedora 28 and Arch Linux
+### Currently working on 10 Series (Pascal) Nvidia GPUs
+### Pull Requests and Issues are welcome
 
-### Disclaimer
-My qualifications:
+## Special Thanks to:
 
-I have none. I am a Windows SysAdmin by trade. Linux is my hobby.
+### The Passthrough post (https://passthroughpo.st)
+For hosting news and information about VFIO passthrough, and for the libvirt/qemu hook helper in this guide.
 
-I am not, nor do I claim to be an expert here. Honestly I'm basically a moron. If you know of a better way to do this, please SHARE IT WITH THE COMMUNITY. Let me know and let everyone know. We can all make this better.
+### andre-ritcher
+For providing the vfio-pci-bind tool. A tool that is no longer used in this guide, but was previously used and he still deserves thanks.
 
-### Background
+### Matoking
+For the Nvidia ROM patcher. Making passing the boot gpu to the VM without GPU bios problems.
 
-Historically guides for GPU passthrough have included much of the same hardware layout. 2 GPUs, one for the host, and one for the guest, as well as 2 monitors. On the advent of solutions like "Looking-Glass" this has continued to perpetuate the 2 GPU model for PCI passthrough.
+### Sporif
+For diagnosing, developing, and testing methods to successfully rebind the EFI-Framebuffer when passing the video card back to the host OS.
 
-I for one have no need for a second GPU. When I am in the unfortunate situation that a game requires a Windows machine, I am going to boot Windows and play it. Otherwise, I'd like to use my single 1080ti on my linux host.
+#### So many other people and organizations I need to thank. If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
 
-#### Why not dual boot then? They ask.
+## Contents
 
-Several reasons.
+1. Disclaimer
+2. Background
+	* Advantages
+	* Disadvantages
+3. Prerequisites and Assumptions
+4. Procedure
 
-1. How can I brag about my Linux uptime if I'm constantly restarting my computer?
+## 1. Disclaimer
+I have no qualifications as a Linux admin/user/professional/intelligent person. I am a windows systems administrator. GNU/Linux is a hobby and passion. I have very little programming experience and I am very bad at all types of scripting. I have hacked together a lot of work that other people have done and put it in one place.
 
-2. Windows doesn't touch bare hardware.
+## 2. Background
+Historically, VFIO passthrough has been built on a very specific model. I.E.
 
-3. Snapshots are REALLY easy for when I want to break Windows
+* 2 GPUs, 1 for the host, and one for the VM
+* 2 monitors *OR* a monitor with 2 inputs
+	* or a KVM switch
 
-4. Easier storage management. Now I don't have to have a bunch of crappy partitions everywhere and everything can be BTRFS subvolumes.
+I personally, as well as some of you out there, might not have those things available. Maybe You've got a Mini-ITX build with no iGPU. Or maybe you're poor like me, and can't shell out for new computer components without some financial  planning before hand.
 
-There are more reasons I'm sure I'm not thinking of right now.
+Whatever your reason is. VFIO is still possible. But with caveats. Here's some advantages and disadvantages of this model.
 
-#### Sold? Good. How do we do it.
+This setup model is a lot like dual booting, without actually rebooting.
 
-First, I'm going to assume that you've been able to get VFIO working in the past in some way. I'm not going to tell you which Distro to use as I've only ever used either Arch Linux or Fedora for PCI Passthrough. This can be adapted to I'm sure lots of other distribtuions as well, but I'm going to focus on my current setup, which is Arch.
+### Advantages
+* As already stated, this model only requires one GPU
+* The ability to switch back and forth between different OSes with FULL use of a discrete graphics processor (Linux on Host with full GPU, Windows 10 Guest with Full GPU, MacOS guest with full GPU)
+* Bragging rights
+* Could be faster than dual booting (this depends on your system)
+* Using virtual disk images (like qcow) gives you management of snapshots, making breaking your guest os easy to recover from.
 
-I'll speed through the beggining while referencing the ArchWiki, noting the changes I made to the procedure on the way.
+### Disadvantages
+* Can only use one OS at a time.
+	- Once the VM is running, it's basically like running that as your main OS. You  will be logged out of your user on the host, but will be unable to manage the host locally at all. You can still use ssh/vnc/xrdp to manage the host.
+* There are still some quirks (I need your help to iron these out!)
+* Using virtual disk images could be a performance hit
+	- You can still use raw partitions/lvm/pass through raw disks, but loose the more robust snapshot and management features
+* If you DO have a second video card, solutions like looking-glass are WAYYY more convenient and need active testing and development.
+* All VMs must be run as root. There are security considerations to be made there. This model requires a level of risk acceptance.
 
-### Prerequisites
-Here are a few of the tools we are going to be using to accomplish our task.
+For my personal use case. This model is worth it to me and it might be for you too!
 
-#### Libvirt Hook helper
-This is going to help us run scripts automagically when starting and stopping our VM
+## Prerequisites and Assumptions
 
-https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/
+### Assumptions
+This guide is going to assume a few things
 
-#### VFIO PCI bind
-This is basically optional, but I've been using it to simplify my own libvirt hooks scripts. Why do more work when someone else has already done it well enough?
+1. You have a system capable of VFIO passthrough. I.E. a processors that supports IOMMU, sane IOMMU groups, and etc.
+2. Unfortunately for the time being, a 10 Series Nvidia GPU. the VFIO ROM patcher we will be using only works with these specifically.
+3. I am going to start in a place where you have a working libvirt config, or qemu script, that boots a guest OS without PCI devices passed through.
 
-https://github.com/andre-richter/vfio-pci-bind
+I am not going to cover the basic setup of VFIO passthrough here. There are a lot of guides out there that cover the process from beginning to end.
 
-Thanks andre-richter!
+What I will say is that using the Arch Wiki is your best bet.
 
-#### Nvidia ROM patcher
+Follow the instructions found here: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
 
-If you're using an nvidia card, you'll need to include a patched ROM file in your libvirt.xml so that the machine doesn't see a GPU that's already been initialized. There are some pre patched roms around, but we'll patch ours ourselves.
+**Skip the Isolating the GPU section** We are not going to do that in this method as we still want the host to have access to it. I will cover this again in the procedure section.
 
-Tools and instructions found here:
+## Prerequisites
 
-https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
+1. A working Libvirt VM or Qemu script for your guest OS.
+2. IOMMU enabled and Sane IOMMU groups
+3. The Following Tools
+	* Nvidia ROM Patcher: https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
+	* (Optional) nvflash for dumping your GPU bios: https://www.techpowerup.com/download/nvidia-nvflash/
+		- Techpowerup also has a database of roms for your corresponding video card model
+	* (If using Libvirt) The Libvirt Hook Helper  https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/
+	* (Optional) Another machine to SSH/VNC to your host with for testing might be useful
 
-Thanks Matoking!
+With all this ready. Let's move on to how to actually do this.
 
-**Optional**
+## Procedure
 
-Another machine to ssh into your host with for testing. Chances are, like everything in VFIO, you're going to need to adjust things.
+### Patching the GPU Rom for the VM
+First of all, we need a usable ROM for the VM. When the boot GPU is already initialized, you're going to get an error from QEMU about usage count. This will fix that problem
 
-### Procedure
+1. Get a rom for your GPU
+	* You can either download one from here https://www.techpowerup.com/vgabios/ or
+	* Use nvflash to dump the bios currently on your GPU. nvflash is pretty straigh forward, but I won't cover it here.
+2. Patch the BIOS file:
 
-To get PCI Passthrough working reference this document from the Arch Wiki.
-https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
-
-Using this guide we are going to stop before "Isolating the GPU" section.
-
-1. Enable IOMMU
-	It goes without saying that you still need to do this
-
-2. Ensure the groups are valid.
-	Yeah. We'll assmue that's the case
-
-3. Isolate the GPU.
-	**Well let's hold on there just a moment.**
-
-	We don't really want to Isolate the gpu from the system entirely. So let's skip this step.
-
-4. OVMF Libvirt Guest
-	Go ahead and setup libvirt to use OVMF. We're going to need it for what we are doing with hot-swapping the GPU.
-
-	Setup a Windows VM with no devices passed through.
-
-	Currently I'm using 2 qcow2 drives. One for Windows, and one to store Games. Reason being is it's not a huge deal if I lose the games drive, as I can just redownload those making the windows drive smaller and easier to back up so I don't have to go through the installation process again if I bork the host in another project.
-
-	You can do whatever performance optimizations you want to the host here as well. CPU pinning and/or hugepages for ram. I suggest both as they have given me moderate performance gains.
-5. Patching the Boot GPU rom.
-6. Working around code 43: See here: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#.22Error_43:_Driver_failed_to_load.22_on_Nvidia_GPUs_passed_to_Windows_VMs
-
-
-### Patching GPU ROM
-
-First we need an unpatched rom for your video card. You can either use the nvidia_flasher util which I am not providing a link to here, or you can download a rom for your video card from techpowerup here:
-
-https://www.techpowerup.com/vgabios/
-
-After getting that. We'll use nvidia_vbios_vfio_patcher to patch it. Following the instruction on the github page:
-
+In the directory where you saved the original vbios, use the patcher tool.
 ````
 python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
 ````
+Now you should have a patched vbios file, which you should place where you can remember it later. I store mine with other libvirt files in ````/var/lib/libvirt/vbios/````
 
-Now we have a patched rom. We'll save that somewhere safe. I put it in a folder I created called
-
-````/var/lib/libvirt/vbios/````
-
-After attaching the GPU to the VM in Libvirt, find the hostdev corresponding to your GPU in the Libvirt XML, and add the line for the rom file telling it where it is.
+3. Attach the PCI device to your VM
+	* In libvirt, use "+ Add Hardware" -> "PCI Host Device" to add the video card and audio device
+4. Edit the libvirt XML file for the VM and add the patched vbios file that we've generated
 
 ````
 sudo virsh edit {VM Name}
@@ -124,22 +123,13 @@ sudo virsh edit {VM Name}
 	...
 </hostdev>
 ````
+5. Save and close the XML file
 
+### Setting up Libvirt hooks
 
+Using libvirt hooks will allow us to automagically run scripts before the VM is started and after the VM has stopped.
 
-### Libvirt Hooks
-
-Here's the magic we're going to be using.
-
-Libvirt has the ability to use hooks for Preparing to run, Running, Preparing to stop, and stopping VMs. The setup although was a bit convoluted, until someone cleaned it up in a nice little script located here.
-
-https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/
-
-Basically, this script and directory structure is going to help automate hooks based on VM name.
-
-In my example, my gaming VM is called "Windows10" because I'm clever and not boring at all.
-
-The directory structure created by the Libvirt Hook helper is located on the post, but we'll go over it here.
+Using the instructions here https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/ to install the base scripts, you'll find a directory structure that now looks like this:
 
 ```
 /etc/libvirt/hooks
@@ -154,106 +144,72 @@ The directory structure created by the Libvirt Hook helper is located on the pos
                 └── revert.sh
 ```
 
-#### TL;DR
-
 Anything in the directory ````/etc/libvirt/hooks/qmeu.d/{VM Name}/prepare/begin```` will run when starting your VM
 
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
-So let's make this work for us by creating a script that:
-1. stops all services using X
-2. Loads the required kernel modules
-3. Unbinds the GPU from the kernel drivers.
-4. Binds the GPU to VFIO.
+#### Libvirt Hook Scripts
+I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
 
-## Here's basically how I unbind the GPU automatically
-#### Make sure you replace the first line with whatever your display manager is
-i.e. Lightdm.service, sddm.service, etc.
-
-``` start.sh
-# Stop all X services
+#### Start Script
+```
+#!/bin/bash
+  
+# Stop display manager
 systemctl stop display-manager.service
-
-
-# Load VFIO kernel modules
-modprobe vfio
-modprobe vfio-pci
-
-
-# Unbind Virtual Consoles
-echo 'Unbinding vtconsole'
-echo 0 | tee /sys/class/vtconsole/vtcon0/bind
-echo 0 | tee /sys/class/vtconsole/vtcon1/bind
-
-
+  
+# Unbind VTconsoles
+echo 0 > /sys/class/vtconsole/vtcon0/bind
+echo 0 > /sys/class/vtconsole/vtcon1/bind
+  
 # Unbind EFI-Framebuffer
-echo 'Unbinding efi-framebuffer'
-echo efi-framebuffer.0 | tee /sys/bus/platform/drivers/efi-framebuffer/unbind
-
-
-# Unbind Nvidia Driver
-echo 'unbind nvidia driver'
-/usr/local/bin/vfio-pci-bind "0000:01:00.0"
-
-
-# Remove Nvidia Drivers
-modprobe -r nvidia_drm
-modprobe -r nvidia_modeset
-modprobe -r nvidia
-
-
-# Wait a second
+echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
+  
+# Unbind the GPU from display driver
+echo -n "0000:01:00.0" > /sys/bus/pci/drivers/nvidia/unbind
+echo -n "0000:01:00.1" > /sys/bus/pci/drivers/snd_hda_intel/unbind
+  
+# Load VFIO Kernel Module  
+modprobe vfio-pci  
+  
 sleep 1
 ```
 
-the vfio-pci-bind script only requires that nothing be using the GPU so it can successfully unibind. Therefore, we unbind the virtual consoles, as well as the efi-Framebuffer
-
-I leave the sleep 1 at the end due to a race condition that I ran into a few times when starting the VM. It might not be required for you.
-
-## Here's how I rebind the GPU when I'm done
-
-``` revert.sh
-#!/bin/sh
-# Reload the driver
-
-
-modprobe -a nvidia
-
-
-# Remove the GPU completely
-
-
-echo 1 | tee /sys/bus/pci/devices/0000:01:00.0/remove
-echo 1 | tee /sys/bus/pci/devices/0000:01:00.1/remove
-
-
-# Rescan for the GPU which automatically rebinds to nvidia driver
-echo 1 | tee /sys/bus/pci/rescan
-
-
+#### VM Stop script
+My stop script is ```/etc/libvirt/hooks/qmeu.d/{VMName}/release/end/revert.sh```
+```
+#!/bin/bash
+  
+# Unload VFIO-PCI Kernel Driver
+modprobe -r vfio-pci
+  
+# Re-Bind GPU to Nvidia Driver
+echo -n "0000:01:00.0" > /sys/bus/pci/drivers/nvidia/bind
+echo -n "0000:01:00.1" > /sys/bus/pci/drivers/snd_hda_intel/bind
+  
+# Wait 1 second to avoid possible race condition
 sleep 1
-
-# attempt rebind to virtual consoles
-echo 1 | tee /sys/class/vtconsole/vtcon0/bind
-echo 1 | tee /sys/class/vtconsole/vtcon1/bind
-
-
-#restart lightdm
+  
+# Re-Bind EFI-Framebuffer
+echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/bind
+  
+# Re-bind to virtual consoles
+echo 1 > /sys/class/vtconsole/vtcon0/bind
+echo 1 > tee /sys/class/vtconsole/vtcon1/bind
+  
+# Restart Display Manager
 systemctl start display-manager.service
 ```
 
-This script is a bit more simple. We remove the GPU completely from the PCI bus, and then rescan for it, which will automatically rebind it to the appropriate video driver (in my case Nvidia)
+## Running the VM
+When running the VM, the scripts should now automatically stop your display manager, unbind your GPU from all drivers currently using it and pass control over the libvirt. Libvirt handles binding the card to VFIO-PCI automatically. 
 
-At the end it restarts my display manager for me and brings it back up and running.
+When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI. The stop script will then rebind the card to Nvidia and SHOULD rebind your vtconsoles and EFI-Framebuffer. 
 
-This should have you back up and running on your linux desktop after stopping the VM.
+# TODO: QEMU Scripts without Libvirt 
+This is also possible, but will require a significantly different process. I might write another process all together and separate the two entirely. 
 
-## Problems with my method and where I need help.
+# Want to test on other GPUs/Distributions/Other mad scientist stuff? 
+Please let me know what you find! 
 
-Unforunately, I am unable to use the virtual consoles again after starting the VM and shutting it down the first time. I think this is tied in somewhere with the efi-framebuffer, which as of now, I do not know how to rebind.
-
-## Other Issues.
-
-You tell me! Where have I gone wrong here? Am I overcomplicating something?
-
-Let me know.
+## As always. Make a pull request or issue. The issue tracker has already solved one problem for me. 
