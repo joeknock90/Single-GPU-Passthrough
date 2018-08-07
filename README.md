@@ -22,17 +22,17 @@ For diagnosing, developing, and testing methods to successfully rebind the EFI-F
 
 ## Contents
 
-1. Disclaimer
-2. Background
-	* Advantages
-	* Disadvantages
-3. Prerequisites and Assumptions
-4. Procedure
+1. [Disclaimer](##disclaimer) 
+2. [Background](##background)
+	* [Advantages](###advantages)
+	* [Disadvantages](###disadvantages)
+3. [Prerequisites](##prerequisites) and [Assumptions](###assumptions)
+4. [Procedure](##procedure)
 
-## 1. Disclaimer
+## Disclaimer
 I have no qualifications as a Linux admin/user/professional/intelligent person. I am a windows systems administrator. GNU/Linux is a hobby and passion. I have very little programming experience and I am very bad at all types of scripting. I have hacked together a lot of work that other people have done and put it in one place.
 
-## 2. Background
+## Background
 Historically, VFIO passthrough has been built on a very specific model. I.E.
 
 * 2 GPUs, 1 for the host, and one for the VM
