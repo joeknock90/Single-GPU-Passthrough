@@ -2,6 +2,7 @@
 
 #### Tested on Fedora 28 and Arch Linux
 #### Currently working on 10 Series (Pascal) Nvidia GPUs
+#### Now working with 5 through 10 Seires cards with manual hex editing
 #### Pull Requests and Issues are welcome
 
 ## Special Thanks to:
@@ -17,6 +18,9 @@ For the Nvidia ROM patcher. Making passing the boot gpu to the VM without GPU bi
 
 ### Sporif
 For diagnosing, developing, and testing methods to successfully rebind the EFI-Framebuffer when passing the video card back to the host OS.
+
+### droidman
+For instructions on manually editing the vBIOS hex for use with VFIO passthrough
 
 #### So many other people and organizations I need to thank. If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
 
@@ -85,7 +89,8 @@ Follow the instructions found here: https://wiki.archlinux.org/index.php/PCI_pas
 1. A working Libvirt VM or Qemu script for your guest OS.
 2. IOMMU enabled and Sane IOMMU groups
 3. The Following Tools
-	* Nvidia ROM Patcher: https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
+    * A hex editor 
+	* (Optional/Only with 10 Series cards) Nvidia ROM Patcher: https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
 	* (Optional) nvflash for dumping your GPU bios: https://www.techpowerup.com/download/nvidia-nvflash/
 		- Techpowerup also has a database of roms for your corresponding video card model
 	* (If using Libvirt) The Libvirt Hook Helper  https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/
@@ -103,11 +108,26 @@ First of all, we need a usable ROM for the VM. When the boot GPU is already init
 	* Use nvflash to dump the bios currently on your GPU. nvflash is pretty straigh forward, but I won't cover it here.
 2. Patch the BIOS file:
 
+#### With Nvidia vBios Patcher
+
 In the directory where you saved the original vbios, use the patcher tool.
 ````
 python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
 ````
 Now you should have a patched vbios file, which you should place where you can remember it later. I store mine with other libvirt files in ````/var/lib/libvirt/vbios/````
+
+#### Manually 
+
+Use the dumped/downloaded bios and open it in a hex editor.
+
+Search in the strings for the line including "VIDEO" that starts with a "U"
+![VIDEO_STRING_IN_HEX](https://user-images.githubusercontent.com/3674090/44610184-aa879c00-a7ea-11e8-9772-408e807aea02.png)
+
+Delete all of the code above the found line.
+![DELETE_FOUND_CODE](https://user-images.githubusercontent.com/3674090/44610217-c4c17a00-a7ea-11e8-908d-b988644681e3.png)
+
+Save!
+
 
 3. Attach the PCI device to your VM
 	* In libvirt, use "+ Add Hardware" -> "PCI Host Device" to add the video card and audio device
