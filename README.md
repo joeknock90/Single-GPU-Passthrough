@@ -190,8 +190,8 @@ echo 0 > /sys/class/vtconsole/vtcon1/bind
 echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
   
 # Unbind the GPU from display driver
-echo -n "0000:01:00.0" > /sys/bus/pci/drivers/nvidia/unbind
-echo -n "0000:01:00.1" > /sys/bus/pci/drivers/snd_hda_intel/unbind
+virsh nodedev-detach pci_0000_01_00_0
+virsh nodedev-detach pci_0000_01_00_1
   
 # Load VFIO Kernel Module  
 modprobe vfio-pci  
@@ -206,20 +206,17 @@ My stop script is ```/etc/libvirt/hooks/qmeu.d/{VMName}/release/end/revert.sh```
   
 # Unload VFIO-PCI Kernel Driver
 modprobe -r vfio-pci
+modprobe -r vfio_iommu_type1
+modprobe -r vfio
   
 # Re-Bind GPU to Nvidia Driver
-echo -n "0000:01:00.0" > /sys/bus/pci/drivers/nvidia/bind
-echo -n "0000:01:00.1" > /sys/bus/pci/drivers/snd_hda_intel/bind
-  
-# Wait 1 second to avoid possible race condition
-sleep 1
-  
-# Re-Bind EFI-Framebuffer
-echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/bind
-  
-# Re-bind to virtual consoles
+virsh nodedev-reattach pci_0000_01_00_1
+virsh nodedev-reattach pci_0000_01_00_0
+
+
 echo 1 > /sys/class/vtconsole/vtcon0/bind
-echo 1 > tee /sys/class/vtconsole/vtcon1/bind
+nvidia-xconfig --query-gpu-info > /dev/null 2>&1
+echo "efi-framebuffer.0" > /sys/bus/platform/drivers/efi-framebuffer/bind
   
 # Restart Display Manager
 systemctl start display-manager.service
