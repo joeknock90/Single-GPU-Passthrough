@@ -25,6 +25,9 @@ For diagnosing, developing, and testing methods to successfully rebind the EFI-F
 ### droidman
 For instructions on manually editing the vBIOS hex for use with VFIO passthrough
 
+### Yuri Alek (https://gitlab.com/YuriAlek/vfio)
+A guide that is no doubt better than mine. Learning a few things from his implementation that can help me out a bit. This guide depends on libvirt at the base where as his has implementations that do not. 
+
 #### So many other people and organizations I need to thank. If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
 
 ## Contents
