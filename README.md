@@ -170,7 +170,7 @@ Using the instructions here https://passthroughpo.st/simple-per-vm-libvirt-hooks
                 └── revert.sh
 ```
 
-Anything in the directory ````/etc/libvirt/hooks/qmeu.d/{VM Name}/prepare/begin```` will run when starting your VM
+Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/prepare/begin```` will run when starting your VM
 
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
@@ -203,7 +203,7 @@ sleep 1
 ```
 
 ### VM Stop script
-My stop script is ```/etc/libvirt/hooks/qmeu.d/{VMName}/release/end/revert.sh```
+My stop script is ```/etc/libvirt/hooks/qemu.d/{VMName}/release/end/revert.sh```
 ```
 #!/bin/bash
   
