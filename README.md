@@ -184,6 +184,8 @@ I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/st
   
 # Stop display manager
 systemctl stop display-manager.service
+## Uncomment the following line if you use GDM
+#killall gdm-x-session
   
 # Unbind VTconsoles
 echo 0 > /sys/class/vtconsole/vtcon0/bind
@@ -201,6 +203,8 @@ modprobe vfio-pci
   
 sleep 1
 ```
+NOTE: Gnome/GDM users. You have to uncommment the line ````killall gdm-x-session```` in order for the script to work properly. Killing GDM does not destroy all users sessions like other display managers do. 
+
 
 ### VM Stop script
 My stop script is ```/etc/libvirt/hooks/qemu.d/{VMName}/release/end/revert.sh```
