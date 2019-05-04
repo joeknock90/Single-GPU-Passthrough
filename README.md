@@ -153,7 +153,7 @@ sudo virsh edit {VM Name}
 
 ## Setting up Libvirt hooks
 
-Using libvirt hooks will allow us to automagically run scripts before the VM is started and after the VM has stopped.
+Using libvirt hooks will allow us to automatically run scripts before the VM is started and after the VM has stopped.
 
 Using the instructions here https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/ to install the base scripts, you'll find a directory structure that now looks like this:
 
