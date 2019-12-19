@@ -185,27 +185,40 @@ I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/st
 ### Start Script
 ```
 #!/bin/bash
-  
+# Helpful to read output when debugging
+set -x
+
 # Stop display manager
-systemctl stop display-manager.service
+systemctl stop x11vnc.service
+systemctl stop sddm.service
 ## Uncomment the following line if you use GDM
 #killall gdm-x-session
-  
+
 # Unbind VTconsoles
 echo 0 > /sys/class/vtconsole/vtcon0/bind
 echo 0 > /sys/class/vtconsole/vtcon1/bind
-  
+
 # Unbind EFI-Framebuffer
 echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
-  
+
+# Avoid a Race condition by waiting 2 seconds. This can be calibrated to be shorter or longer if required for your system
+sleep 2
+
+# Unload all Nvidia drivers
+modprobe -r nvidia_drm
+modprobe -r nvidia_modeset
+modprobe -r nvidia_uvm
+modprobe -r nvidia
+# Looks like these might need to be unloaded on Ryzen Systems. Not sure yet.
+modprobe -r ipmi_devintf
+modprobe -r ipmi_msghandler
+
 # Unbind the GPU from display driver
-virsh nodedev-detach pci_0000_01_00_0
-virsh nodedev-detach pci_0000_01_00_1
-  
+virsh nodedev-detach pci_0000_0c_00_0
+virsh nodedev-detach pci_0000_0c_00_1
+
 # Load VFIO Kernel Module  
 modprobe vfio-pci  
-  
-sleep 1
 ```
 NOTE: Gnome/GDM users. You have to uncommment the line ````killall gdm-x-session```` in order for the script to work properly. Killing GDM does not destroy all users sessions like other display managers do. 
 
