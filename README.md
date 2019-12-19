@@ -1,7 +1,9 @@
+
+## If you go to reddit for help yell at u/lellow_yedbetter
+
 ## See also: https://gitlab.com/YuriAlek/vfio
 ### A slightly different, more complete guide with different script implementations. I will continue to update this guide for myself and others who are interested in a more Libvirt approach. 
 
-#### If you go to reddit for help yell at u/lellow_yedbetter
 
 # Single GPU Passthrough on Linux  
 
