@@ -250,11 +250,12 @@ When running the VM, the scripts should now automatically stop your display mana
 When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI. The stop script will then rebind the card to Nvidia and SHOULD rebind your vtconsoles and EFI-Framebuffer. 
 
 # Troubleshooting
+First of all. If you ask for help, then tell me you skipped some step... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the steps of this guide. They are all here for a reason. 
 ## Common issues
 ### Black Screen on VM Activation
 1. Make sure you've removed the Spice Video and QXL video adapter on the VM
 2. This can also be caused by Code 43 on nvidia GPUs. See here for troubleshooting that: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs
-2. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
+3. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
 	1. SSH into the host, and manually run the start script. If the start script runs properly, the host monitors should go completely black, and the terminal should return you to the prompt. 
 	2. If all goes well there, try running the vm manually using `sudo virsh start {vmname}`
 	3. If there is a problem here, typically the command will hang. That would signify a problem with the VM libvirt configuration. 
