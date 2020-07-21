@@ -1,19 +1,10 @@
 
 ## If you go to reddit for help yell at u/lellow_yedbetter
 
-## See also: https://gitlab.com/YuriAlek/vfio
-### A slightly different, more complete guide with different script implementations. I will continue to update this guide for myself and others who are interested in a more Libvirt approach. 
-
-
 # Single GPU Passthrough on Linux  
-
-#### Tested on Fedora 28 and Arch Linux
-#### Currently working on 10 Series (Pascal) Nvidia GPUs
-#### Now working with 5 through 10 Seires cards with manual hex editing
-#### Pull Requests and Issues are welcome
+This guide is to help people through the process of using GPU Passthrough via libvirt/virt-manager on systems that only have one GPU. 
 
 ## Special Thanks to:
-
 ### The Passthrough post (https://passthroughpo.st)
 For hosting news and information about VFIO passthrough, and for the libvirt/qemu hook helper in this guide.
 
@@ -38,20 +29,19 @@ A guide that is no doubt better than mine. Learning a few things from his implem
 
 1. [Disclaimer](##disclaimer) 
 2. [Background](##background)
-	* [Advantages](###advantages)
-	* [Disadvantages](###disadvantages)
-3. [Prerequisites](##prerequisites) and [Assumptions](###assumptions)
+3. [Advantages](##advantages)
+4. [Disadvantages](###disadvantages)
+3. [Prerequisites](##prerequisites) and [Assumptions](##assumptions)
 4. [Procedure](##procedure)
 
 # Disclaimer
-I have no qualifications as a Linux admin/user/professional/intelligent person. I am a windows systems administrator. GNU/Linux is a hobby and passion. I have very little programming experience and I am very bad at all types of scripting. I have hacked together a lot of work that other people have done and put it in one place.
+You are completely responsible for your hardware and software. This guide makes no guarentees that the process will work for you, or will not void your waranty on various parts or break your computer in some way. Everything from here on out is at your own risk. 
 
 # Background
 Historically, VFIO passthrough has been built on a very specific model. I.E.
 
 * 2 GPUs, 1 for the host, and one for the VM
-* 2 monitors *OR* a monitor with 2 inputs
-	* or a KVM switch
+* 2 monitors *OR* a monitor with 2 inputs *OR* a KVM switch
 
 I personally, as well as some of you out there, might not have those things available. Maybe You've got a Mini-ITX build with no iGPU. Or maybe you're poor like me, and can't shell out for new computer components without some financial  planning before hand.
 
@@ -79,7 +69,7 @@ For my personal use case. This model is worth it to me and it might be for you t
 
 # Prerequisites and Assumptions
 
-# Assumptions
+## Assumptions
 This guide is going to assume a few things
 
 1. You have a system capable of VFIO passthrough. I.E. a processors that supports IOMMU, sane IOMMU groups, and etc.
@@ -94,7 +84,7 @@ Follow the instructions found here: https://wiki.archlinux.org/index.php/PCI_pas
 
 **Skip the Isolating the GPU section** We are not going to do that in this method as we still want the host to have access to it. I will cover this again in the procedure section.
 
-# Prerequisites
+## Prerequisites
 
 1. A working Libvirt VM or Qemu script for your guest OS.
 2. IOMMU enabled and Sane IOMMU groups
@@ -178,7 +168,9 @@ Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/prepare/begin`
 
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
-### Libvirt Hook Scripts
+### Libvirt Hook Scripts]
+#### Do not copy my scripts. Use them as a template, but write your own. 
+
 I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
 
 
@@ -189,8 +181,7 @@ I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/st
 set -x
 
 # Stop display manager
-systemctl stop x11vnc.service
-systemctl stop sddm.service
+systemctl stop display-manager.service
 ## Uncomment the following line if you use GDM
 #killall gdm-x-session
 
@@ -209,9 +200,6 @@ modprobe -r nvidia_drm
 modprobe -r nvidia_modeset
 modprobe -r nvidia_uvm
 modprobe -r nvidia
-# Looks like these might need to be unloaded on Ryzen Systems. Not sure yet.
-modprobe -r ipmi_devintf
-modprobe -r ipmi_msghandler
 
 # Unbind the GPU from display driver
 virsh nodedev-detach pci_0000_0c_00_0
@@ -240,6 +228,7 @@ virsh nodedev-reattach pci_0000_0c_00_0
 
 # Rebind VT consoles
 echo 1 > /sys/class/vtconsole/vtcon0/bind
+# Some machines might have more than 1 virtual console. Add a line for each corresponding VTConsole
 #echo 1 > /sys/class/vtconsole/vtcon1/bind
 
 nvidia-xconfig --query-gpu-info > /dev/null 2>&1
@@ -249,12 +238,9 @@ modprobe nvidia_drm
 modprobe nvidia_modeset
 modprobe nvidia_uvm
 modprobe nvidia
-modprobe ipmi_devintf
-modprobe ipmi_msghandler
 
 # Restart Display Manager
-systemctl start sddm.service
-systemctl start x11vnc.service
+systemctl start display-manager.service
 
 ```
 
@@ -263,15 +249,39 @@ When running the VM, the scripts should now automatically stop your display mana
 
 When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI. The stop script will then rebind the card to Nvidia and SHOULD rebind your vtconsoles and EFI-Framebuffer. 
 
-# TODO: QEMU Scripts without Libvirt 
-This is also possible, but will require a significantly different process. I might write another process all together and separate the two entirely. 
+# Troubleshooting
+## Common issues
+### Black Screen on VM Activation
+1. Make sure you've removed the Spice Video and QXL video adapter on the VM
+2. This can also be caused by Code 43 on nvidia GPUs. See here for troubleshooting that: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs
+2. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
+	1. SSH into the host, and manually run the start script. If the start script runs properly, the host monitors should go completely black, and the terminal should return you to the prompt. 
+	2. If all goes well there, try running the vm manually using `sudo virsh start {vmname}`
+	3. If there is a problem here, typically the command will hang. That would signify a problem with the VM libvirt configuration. 
+	4. If you are returned to the prompt, check if the vm is in a running state by using `sudo virsh list`
+	5. If it's running fine, and you've made sure that you are not having the issue in step 1 and 2, yell at me in the issue tracker or reddit
 
-# Want to test on other GPUs/Distributions/Other mad scientist stuff? 
-Please let me know what you find! 
+### Audio
+Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
+## NOTE
+Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
+`sudo loginctl enable-linger {username}`
+This will keep services running even when your account is not logged in. I do not know the security implications of this. My assumption is that it's not a great idea, but oh well. 
 
-## As always. Make a pull request or issue. The issue tracker has already solved one problem for me. 
+# Tips and Tricks
+## Personal Touches
+Here's a few things I do to make managing the host easier. 
 
-### Fuel my coffee addiction
+1. Start a VNC server on the host in the start script
+2. Set pulseaudio volume to 100%
+3. 
+
+
+# Let me know what works and what doesnt!
+Let me know your success and failure stories. 
+
+
+#### Fuel my coffee addiction
 #### Always appreciated, never required.
 
 ETH: 0xE4Bf3fc0562f7F63d0F9dF94E87e01C217D30918
