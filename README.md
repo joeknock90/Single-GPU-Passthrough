@@ -275,7 +275,7 @@ Here's a few things I do to make managing the host easier.
 
 1. Start a VNC server on the host in the start script
 2. Set pulseaudio volume to 100%
-3. 
+3. Anything you want the host to do upon VM activation.
 
 
 # Let me know what works and what doesnt!
