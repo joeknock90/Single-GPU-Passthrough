@@ -73,8 +73,7 @@ For my personal use case. This model is worth it to me and it might be for you t
 This guide is going to assume a few things
 
 1. You have a system capable of VFIO passthrough. I.E. a processors that supports IOMMU, sane IOMMU groups, and etc.
-2. Unfortunately for the time being, a 10 Series Nvidia GPU. the VFIO ROM patcher we will be using only works with these specifically.
-3. I am going to start in a place where you have a working libvirt config, or qemu script, that boots a guest OS without PCI devices passed through.
+2. I am going to start in a place where you have a working libvirt config, or qemu script, that boots a guest OS without PCI devices passed through.
 
 I am not going to cover the basic setup of VFIO passthrough here. There are a lot of guides out there that cover the process from beginning to end.
 
@@ -109,6 +108,7 @@ First of all, we need a usable ROM for the VM. When the boot GPU is already init
 2. Patch the BIOS file:
 
 #### With Nvidia vBios Patcher
+The Nvidia vBios Patcher currently only works with nvidia 10 Series GPUs. if you have a different GPU, try the manual method
 
 In the directory where you saved the original vbios, use the patcher tool.
 ````
@@ -251,6 +251,10 @@ When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI
 
 # Troubleshooting
 First of all. If you ask for help, then tell me you skipped some step... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the steps of this guide. They are all here for a reason. 
+
+## Logs
+Logs can be found under /var/log/libvirt/qemu/[VM name].log
+
 ## Common issues
 ### Black Screen on VM Activation
 1. Make sure you've removed the Spice Video and QXL video adapter on the VM
@@ -264,6 +268,11 @@ First of all. If you ask for help, then tell me you skipped some step... I'm gon
 
 ### Audio
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
+
+### failed to find/load romfile
+This problem iss related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
+see: https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom
+
 ## NOTE
 Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
 `sudo loginctl enable-linger {username}`
