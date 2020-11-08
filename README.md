@@ -27,12 +27,12 @@ A guide that is no doubt better than mine. Learning a few things from his implem
 
 ## Contents
 
-1. [Disclaimer](##disclaimer) 
-2. [Background](##background)
-3. [Advantages](##advantages)
-4. [Disadvantages](###disadvantages)
-3. [Prerequisites](##prerequisites) and [Assumptions](##assumptions)
-4. [Procedure](##procedure)
+1. [Disclaimer](#disclaimer) 
+2. [Background](#background)
+3. [Advantages](#advantages)
+4. [Disadvantages](#disadvantages)
+3. [Prerequisites](#prerequisites) and [Assumptions](#assumptions)
+4. [Procedure](#procedure)
 
 # Disclaimer
 You are completely responsible for your hardware and software. This guide makes no guarentees that the process will work for you, or will not void your waranty on various parts or break your computer in some way. Everything from here on out is at your own risk. 
