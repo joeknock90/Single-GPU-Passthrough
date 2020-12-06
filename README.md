@@ -255,7 +255,7 @@ When running the VM, the scripts should now automatically stop your display mana
 When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI. The stop script will then rebind the card to Nvidia and SHOULD rebind your vtconsoles and EFI-Framebuffer. 
 
 # Troubleshooting
-First of all. If you ask for help, then tell me you skipped some required steps... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the applicable steps of this guide. They are all here for a reason. 
+First of all. If you ask for help, then tell me you skipped some steps... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the applicable steps of this guide. They are all here for a reason. 
 
 ## Logs
 Logs can be found under /var/log/libvirt/qemu/[VM name].log
