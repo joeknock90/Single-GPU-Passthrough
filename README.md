@@ -49,7 +49,8 @@ My desired model is as follows:
 
 * 1 GPU shared mutually exclusively among the host and all guests.
 * 1 monitor with 1 or more pairs of keyboard and mouse.
-* System boots into host system initially with full GPU access, then the user can start a guest system and let the guest system to fully take over the GPU on-the-fly.
+* System boots into host OS initially with full GPU access given to the host OS, then the user can start a guest OS and let the guest OS to fully take over the GPU on-the-fly.
+* The controls are handed back to host OS when the guest OS shuts down.
 * Think about dual booting but without actually rebooting.
 
 VFIO is still possible for this setup, but with caveats. Here's some advantages and disadvantages of this model.
