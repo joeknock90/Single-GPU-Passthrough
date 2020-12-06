@@ -45,9 +45,14 @@ Historically, VFIO passthrough has been built on a very specific model. I.E.
 
 I personally, as well as some of you out there, might not have those things available. Maybe You've got a Mini-ITX build with no iGPU. Or maybe you're poor like me, and can't shell out for new computer components without some financial  planning before hand.
 
-Whatever your reason is. VFIO is still possible. But with caveats. Here's some advantages and disadvantages of this model.
+My desired model is as follows:
 
-This setup model is a lot like dual booting, without actually rebooting.
+* 1 GPU shared mutually exclusively among the host and all guests.
+* 1 monitor with 1 or more pairs of keyboard and mouse.
+* System boots into host system initially with full GPU access, then the user can start a guest system and let the guest system to fully take over the GPU on-the-fly.
+* Think about dual booting but without actually rebooting.
+
+VFIO is still possible for this setup, but with caveats. Here's some advantages and disadvantages of this model.
 
 # Advantages
 * As already stated, this model only requires one GPU
@@ -60,7 +65,7 @@ This setup model is a lot like dual booting, without actually rebooting.
 * Can only use one OS at a time.
 	- Once the VM is running, it's basically like running that as your main OS. You  will be logged out of your user on the host, but will be unable to manage the host locally at all. You can still use ssh/vnc/xrdp to manage the host.
 * There are still some quirks (I need your help to iron these out!)
-* Using virtual disk images could be a performance hit on some I/O loads
+* Using virtual disk images could be a performance hit on some cases
 	- You can still use raw partitions/lvm/pass through raw disks, but lose the more robust snapshot and management features
 * If you DO have a second video card, solutions like looking-glass are WAYYY more convenient and need active testing and development.
 * All VMs must be run as root. There are security considerations to be made there. This model requires a level of risk acceptance.
@@ -146,8 +151,6 @@ sudo virsh edit {VM Name}
 5. Save and close the XML file
 
 ## Setting up Libvirt hooks
-
-**NOTE:** If you are setting up a headless host with framebuffers disabled at boot via kernel cmdline, you may skip this step.
 
 Using libvirt hooks will allow us to automatically run scripts before the VM is started and after the VM has stopped.
 
@@ -273,9 +276,7 @@ Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passth
 
 **NOTE**: Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
 `sudo loginctl enable-linger {username}`
-This will keep services running even when your account is not logged in. I do not know the security implications of this. My assumption is that it's not a great idea, but oh well. 
-
-Also you could try passing the sound card if you are absolutely paranoid about latency and when the IOMMU group configuration allows.
+This will keep services running even when your account is not logged in. I do not know the security implications of this. My assumption is that it's not a great idea, but oh well.
 
 ### failed to find/load romfile
 If you have some mandatory access control enabled (some distros enables it by default e.g. AppArmor on Ubuntu, SELinux on Fedora), check the audit logs to confirm the issue. If it's indeed caused by misconfigured MAC, either add a rule to whitelist the path or move the file to somewhere libvirt can access (e.g. /usr/share/vgabios/bios.rom).
