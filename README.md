@@ -134,6 +134,10 @@ Delete all of the code above the found line.
 
 Save!
 
+##### OPTIONAL: Fix overdump
+
+The VGA BIOS extracted using the manual method above will usually contain a lot of unnecessary data inside. This will not affect normal use, however you can clean it up if you are absolutely paranoid about it. To strip unnecessary data, compile and run `romheaders` tool from [fcode-utils](https://github.com/openbios/fcode-utils) on the extracted VGA BIOS (i.e. `romheaders extracted-bios.bin`), take a note on all the "image length" fields listed in the output (in the format of `Image Length: 0x??? blocks (??? bytes)`). Add all the **BYTES** value of all "image length" fields together and use `truncate -s <total image length> extracted-bios.bin` to strip the overdumped data.
+
 
 3. Attach the PCI device to your VM
 	* In libvirt, use "+ Add Hardware" -> "PCI Host Device" to add the video card and audio device
