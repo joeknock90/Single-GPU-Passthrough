@@ -45,9 +45,15 @@ Historically, VFIO passthrough has been built on a very specific model. I.E.
 
 I personally, as well as some of you out there, might not have those things available. Maybe You've got a Mini-ITX build with no iGPU. Or maybe you're poor like me, and can't shell out for new computer components without some financial  planning before hand.
 
-Whatever your reason is. VFIO is still possible. But with caveats. Here's some advantages and disadvantages of this model.
+My desired model is as follows:
 
-This setup model is a lot like dual booting, without actually rebooting.
+* 1 GPU shared mutually exclusively among the host and all guests.
+* 1 monitor with 1 or more pairs of keyboard and mouse.
+* System boots into host OS initially with full GPU access given to the host OS, then the user can start a guest OS and let the guest OS to fully take over the GPU on-the-fly.
+* The controls are handed back to host OS when the guest OS shuts down.
+* Think about dual booting but without actually rebooting.
+
+VFIO is still possible for this setup, but with caveats. Here's some advantages and disadvantages of this model.
 
 # Advantages
 * As already stated, this model only requires one GPU
@@ -60,8 +66,8 @@ This setup model is a lot like dual booting, without actually rebooting.
 * Can only use one OS at a time.
 	- Once the VM is running, it's basically like running that as your main OS. You  will be logged out of your user on the host, but will be unable to manage the host locally at all. You can still use ssh/vnc/xrdp to manage the host.
 * There are still some quirks (I need your help to iron these out!)
-* Using virtual disk images could be a performance hit
-	- You can still use raw partitions/lvm/pass through raw disks, but loose the more robust snapshot and management features
+* Using virtual disk images could be a performance hit on some cases
+	- You can still use raw partitions/lvm/pass through raw disks, but lose the more robust snapshot and management features
 * If you DO have a second video card, solutions like looking-glass are WAYYY more convenient and need active testing and development.
 * All VMs must be run as root. There are security considerations to be made there. This model requires a level of risk acceptance.
 
@@ -99,28 +105,28 @@ With all this ready. Let's move on to how to actually do this.
 
 # Procedure
 
-## Patching the GPU Rom for the VM
+## Extract a clean copy of VGA BIOS for the VM
 First of all, we need a usable ROM for the VM. When the boot GPU is already initialized, you're going to get an error from QEMU about usage count. This will fix that problem
 
 1. Get a rom for your GPU
 	* You can either download one from here https://www.techpowerup.com/vgabios/ or
 	* Use nvflash to dump the bios currently on your GPU. nvflash is pretty straigh forward, but I won't cover it here.
-2. Patch the BIOS file:
+2. Extract the BIOS body:
 
 #### With Nvidia vBios Patcher
 The Nvidia vBios Patcher currently only works with nvidia 10 Series GPUs. if you have a different GPU, try the manual method
 
 In the directory where you saved the original vbios, use the patcher tool.
 ````
-python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
+python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <EXTRACTED_BIOS>
 ````
-Now you should have a patched vbios file, which you should place where you can remember it later. I store mine with other libvirt files in ````/var/lib/libvirt/vbios/````
+Now you should have an extracted BIOS file, which you should place where you can remember it later. I store mine with other libvirt files in ````/var/lib/libvirt/vbios/````
 
-#### Manually 
+#### Manually strip the header from the dumped/downloaded ROM image
 
 Use the dumped/downloaded bios and open it in a hex editor.
 
-Search in the strings for the line including "VIDEO" that starts with a "U"
+Search in the strings for the line including "VIDEO" that starts with a "U" (hex code `55aa`)
 ![VIDEO_STRING_IN_HEX](https://user-images.githubusercontent.com/3674090/44610184-aa879c00-a7ea-11e8-9772-408e807aea02.png)
 
 Delete all of the code above the found line.
@@ -128,10 +134,14 @@ Delete all of the code above the found line.
 
 Save!
 
+##### OPTIONAL: Fix overdump
+
+The VGA BIOS extracted using the manual method above will usually contain a lot of unnecessary data inside. This will not affect normal use, however you can clean it up if you are absolutely paranoid about it. To strip unnecessary data, compile and run `romheaders` tool from [fcode-utils](https://github.com/openbios/fcode-utils) on the extracted VGA BIOS (i.e. `romheaders extracted-bios.bin`), take a note on all the "image length" fields listed in the output (in the format of `Image Length: 0x??? blocks (??? bytes)`). Add all the **BYTES** value of all "image length" fields together and use `truncate -s <total image length> extracted-bios.bin` to strip the overdumped data.
+
 
 3. Attach the PCI device to your VM
 	* In libvirt, use "+ Add Hardware" -> "PCI Host Device" to add the video card and audio device
-4. Edit the libvirt XML file for the VM and add the patched vbios file that we've generated
+4. Edit the libvirt XML file for the VM and add the extracted vbios file
 
 ````
 sudo virsh edit {VM Name}
@@ -139,7 +149,7 @@ sudo virsh edit {VM Name}
 ````
 <hostdev>
 	...
-	<rom file='/var/lib/libvirt/vbios/patched-bios.bin'/>
+	<rom file='/var/lib/libvirt/vbios/extracted-bios.bin'/>
 	...
 </hostdev>
 ````
@@ -168,7 +178,7 @@ Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/prepare/begin`
 
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
-### Libvirt Hook Scripts]
+### Sample libvirt Hook Scripts
 #### Do not copy my scripts. Use them as a template, but write your own. 
 
 I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
@@ -250,7 +260,7 @@ When running the VM, the scripts should now automatically stop your display mana
 When the VM is stopped, Libvirt will also handle removing the card from VFIO-PCI. The stop script will then rebind the card to Nvidia and SHOULD rebind your vtconsoles and EFI-Framebuffer. 
 
 # Troubleshooting
-First of all. If you ask for help, then tell me you skipped some step... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the steps of this guide. They are all here for a reason. 
+First of all. If you ask for help, then tell me you skipped some steps... I'm gonna be a little annoyed. So before moving on to troubleshooting, and DEFINATELY before asking for help, make sure you've follwed ALL of the steps of this guide. They are all here for a reason. 
 
 ## Logs
 Logs can be found under /var/log/libvirt/qemu/[VM name].log
@@ -269,14 +279,14 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 ### Audio
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
 
+**NOTE**: Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
+`sudo loginctl enable-linger {username}`
+This will keep services running even when your account is not logged in. I do not know the security implications of this. My assumption is that it's not a great idea, but oh well.
+
 ### failed to find/load romfile
-This problem iss related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
+If you have some mandatory access control enabled (some distros enables it by default e.g. AppArmor on Ubuntu, SELinux on Fedora), check the audit logs to confirm the issue. If it's indeed caused by misconfigured MAC, either add a rule to whitelist the path or move the file to somewhere libvirt can access (e.g. /usr/share/vgabios/bios.rom).
 see: https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom
 
-## NOTE
-Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
-`sudo loginctl enable-linger {username}`
-This will keep services running even when your account is not logged in. I do not know the security implications of this. My assumption is that it's not a great idea, but oh well. 
 
 # Tips and Tricks
 ## Personal Touches
