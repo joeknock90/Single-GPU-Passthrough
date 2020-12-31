@@ -258,13 +258,17 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 ## Common issues
 ### Black Screen on VM Activation
 1. Make sure you've removed the Spice Video and QXL video adapter on the VM
-2. This can also be caused by Code 43 on nvidia GPUs. See here for troubleshooting that: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs
-3. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
+2. Try a newer kernel. The LTS kernel (v5.4) might not work.
+3. Check out the arch wiki for troubleshooting: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Troubleshooting
+4. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
 	1. SSH into the host, and manually run the start script. If the start script runs properly, the host monitors should go completely black, and the terminal should return you to the prompt. 
 	2. If all goes well there, try running the vm manually using `sudo virsh start {vmname}`
 	3. If there is a problem here, typically the command will hang. That would signify a problem with the VM libvirt configuration. 
 	4. If you are returned to the prompt, check if the vm is in a running state by using `sudo virsh list`
 	5. If it's running fine, and you've made sure that you are not having the issue in step 1 and 2, yell at me in the issue tracker or reddit
+
+### Video card driver failed to load with code 43 because of virtualisation detection
+Solution: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Video_card_driver_virtualisation_detection
 
 ### Audio
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
