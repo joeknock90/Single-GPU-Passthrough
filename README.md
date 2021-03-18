@@ -294,7 +294,6 @@ Here's a few things I do to make managing the host easier.
 Let me know your success and failure stories. 
 
 
-#### Fuel my coffee addiction
+#### [Fuel my coffee addiction or help me test new hardware](https://paypal.me/joeknock?locale.x=en_US)
 #### Always appreciated, never required.
 
-ETH: 0xE4Bf3fc0562f7F63d0F9dF94E87e01C217D30918
