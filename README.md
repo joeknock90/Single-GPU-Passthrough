@@ -91,9 +91,10 @@ Follow the instructions found [here][arch_wiki]
 2. IOMMU enabled and Sane IOMMU groups
 3. The Following Tools
     * A hex editor 
-	* (Optional/Only with 10 Series cards) [Nvidia ROM Patcher](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher)
+
+	* (Optional) [Nvidia ROM Patcher](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher)
 	* (Optional) [nvflash for dumping your GPU bios](https://www.techpowerup.com/download/nvidia-nvflash/)
-		- Techpowerup also has a database of roms for your corresponding video card model
+		- [Techpowerup](https://www.techpowerup.com/vgabios/) also has a database of roms for your corresponding video card model
 	* (If using Libvirt) [The Libvirt Hook Helper](https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/)
 	* (Optional) Another machine to SSH/VNC to your host with for testing might be useful
 
