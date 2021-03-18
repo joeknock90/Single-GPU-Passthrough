@@ -294,6 +294,6 @@ Here's a few things I do to make managing the host easier.
 Let me know your success and failure stories. 
 
 
-#### [Fuel my coffee addiction or help me test new hardware](https://paypal.me/joeknock?locale.x=en_US)
+#### [Fuel my coffee addiction or help me test new hardware](https://www.paypal.com/donate?business=87AQBT5TGFRJS&item_name=Github+Testing&currency_code=USD)
 #### Always appreciated, never required.
 
