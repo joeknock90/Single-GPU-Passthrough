@@ -1,11 +1,11 @@
 
-## If you go to reddit for help yell at u/lellow_yedbetter
+## If you go to reddit for help yell at [u/lellow_yedbetter](https://www.reddit.com/user/lellow_yedbetter/)
 
 # Single GPU Passthrough on Linux  
 This guide is to help people through the process of using GPU Passthrough via libvirt/virt-manager on systems that only have one GPU. 
 
 ## Special Thanks to:
-### The Passthrough post (https://passthroughpo.st)
+### [The Passthrough post](https://passthroughpo.st)
 For hosting news and information about VFIO passthrough, and for the libvirt/qemu hook helper in this guide.
 
 ### andre-ritcher
@@ -20,7 +20,7 @@ For diagnosing, developing, and testing methods to successfully rebind the EFI-F
 ### droidman
 For instructions on manually editing the vBIOS hex for use with VFIO passthrough
 
-### Yuri Alek (https://gitlab.com/YuriAlek/vfio)
+### [Yuri Alek](https://gitlab.com/YuriAlek/vfio)
 A guide that is no doubt better than mine. Learning a few things from his implementation that can help me out a bit. This guide depends on libvirt at the base where as his has implementations that do not. 
 
 #### So many other people and organizations I need to thank. If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
@@ -77,9 +77,11 @@ This guide is going to assume a few things
 
 I am not going to cover the basic setup of VFIO passthrough here. There are a lot of guides out there that cover the process from beginning to end.
 
-What I will say is that using the Arch Wiki is your best bet.
+What I will say is that using the [Arch Wiki][arch_wiki] is your best bet.
 
-Follow the instructions found here: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
+Follow the instructions found [here][arch_wiki]
+
+[arch_wiki]: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
 
 **Skip the Isolating the GPU section** We are not going to do that in this method as we still want the host to have access to it. I will cover this again in the procedure section.
 
@@ -89,10 +91,10 @@ Follow the instructions found here: https://wiki.archlinux.org/index.php/PCI_pas
 2. IOMMU enabled and Sane IOMMU groups
 3. The Following Tools
     * A hex editor 
-	* (Optional/Only with 10 Series cards) Nvidia ROM Patcher: https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher
-	* (Optional) nvflash for dumping your GPU bios: https://www.techpowerup.com/download/nvidia-nvflash/
+	* (Optional/Only with 10 Series cards) [Nvidia ROM Patcher](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher)
+	* (Optional) [nvflash for dumping your GPU bios](https://www.techpowerup.com/download/nvidia-nvflash/)
 		- Techpowerup also has a database of roms for your corresponding video card model
-	* (If using Libvirt) The Libvirt Hook Helper  https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/
+	* (If using Libvirt) [The Libvirt Hook Helper](https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/)
 	* (Optional) Another machine to SSH/VNC to your host with for testing might be useful
 
 With all this ready. Let's move on to how to actually do this.
@@ -103,7 +105,7 @@ With all this ready. Let's move on to how to actually do this.
 First of all, we need a usable ROM for the VM. When the boot GPU is already initialized, you're going to get an error from QEMU about usage count. This will fix that problem
 
 1. Get a rom for your GPU
-	* You can either download one from here https://www.techpowerup.com/vgabios/ or
+	* You can either download one from [here](https://www.techpowerup.com/vgabios/) or
 	* Use nvflash to dump the bios currently on your GPU. nvflash is pretty straigh forward, but I won't cover it here.
 2. Patch the BIOS file:
 
@@ -149,7 +151,7 @@ sudo virsh edit {VM Name}
 
 Using libvirt hooks will allow us to automatically run scripts before the VM is started and after the VM has stopped.
 
-Using the instructions here https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/ to install the base scripts, you'll find a directory structure that now looks like this:
+Using the instructions [here](https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/) to install the base scripts, you'll find a directory structure that now looks like this:
 
 ```
 /etc/libvirt/hooks
@@ -258,7 +260,7 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 ## Common issues
 ### Black Screen on VM Activation
 1. Make sure you've removed the Spice Video and QXL video adapter on the VM
-2. This can also be caused by Code 43 on nvidia GPUs. See here for troubleshooting that: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs
+2. This can also be caused by Code 43 on nvidia GPUs. See [here](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs) for troubleshooting that.
 3. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
 	1. SSH into the host, and manually run the start script. If the start script runs properly, the host monitors should go completely black, and the terminal should return you to the prompt. 
 	2. If all goes well there, try running the vm manually using `sudo virsh start {vmname}`
@@ -271,7 +273,7 @@ Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passth
 
 ### failed to find/load romfile
 This problem iss related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
-see: https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom
+[see](https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom)
 
 ## NOTE
 Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
