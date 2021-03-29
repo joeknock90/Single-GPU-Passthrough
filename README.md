@@ -1,5 +1,5 @@
 
-## If you go to reddit for help yell at [u/lellow_yedbetter](https://www.reddit.com/user/lellow_yedbetter/)
+### If you go to reddit (specifically [r/vfio](https://www.reddit.com/r/vfio) for help, try to mention [u/lellow_yedbetter](https://www.reddit.com/user/lellow_yedbetter/). You will probably get help faster from users in the sub, but it is easier for me to keep an eye on the github issues. 
 
 # Single GPU Passthrough on Linux  
 This guide is to help people through the process of using GPU Passthrough via libvirt/virt-manager on systems that only have one GPU. 
