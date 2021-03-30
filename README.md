@@ -263,7 +263,7 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
 
 ### failed to find/load romfile
-This problem iss related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
+This problem is related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
 [see](https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom)
 
 ## NOTE
