@@ -92,61 +92,15 @@ Follow the instructions found [here][arch_wiki]
 3. The Following Tools
     * A hex editor 
 
-	* (Optional) [Nvidia ROM Patcher](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher)
-	* (Optional) [nvflash for dumping your GPU bios](https://www.techpowerup.com/download/nvidia-nvflash/)
-		- [Techpowerup](https://www.techpowerup.com/vgabios/) also has a database of roms for your corresponding video card model
+	~~* (Optional) [Nvidia ROM Patcher](https://github.com/Matoking/NVIDIA-vBIOS-VFIO-Patcher)
+	~~* (Optional) [nvflash for dumping your GPU bios](https://www.techpowerup.com/download/nvidia-nvflash/)
+		~~- [Techpowerup](https://www.techpowerup.com/vgabios/) also has a database of roms for your corresponding video card model
 	* (If using Libvirt) [The Libvirt Hook Helper](https://passthroughpo.st/simple-per-vm-libvirt-hooks-with-the-vfio-tools-hook-helper/)
 	* (Optional) Another machine to SSH/VNC to your host with for testing might be useful
 
 With all this ready. Let's move on to how to actually do this.
 
 # Procedure
-
-## Patching the GPU Rom for the VM
-First of all, we need a usable ROM for the VM. When the boot GPU is already initialized, you're going to get an error from QEMU about usage count. This will fix that problem
-
-1. Get a rom for your GPU
-	* You can either download one from [here](https://www.techpowerup.com/vgabios/) or
-	* Use nvflash to dump the bios currently on your GPU. nvflash is pretty straigh forward, but I won't cover it here.
-2. Patch the BIOS file:
-
-#### With Nvidia vBios Patcher
-The Nvidia vBios Patcher currently only works with nvidia 10 Series GPUs. if you have a different GPU, try the manual method
-
-In the directory where you saved the original vbios, use the patcher tool.
-````
-python nvidia_vbios_vfio_patcher.py -i <ORIGINAL_ROM> -o <PATCHED_ROM>
-````
-Now you should have a patched vbios file, which you should place where you can remember it later. I store mine with other libvirt files in ````/var/lib/libvirt/vbios/````
-
-#### Manually 
-
-Use the dumped/downloaded bios and open it in a hex editor.
-
-Search in the strings for the line including "VIDEO" that starts with a "U"
-![VIDEO_STRING_IN_HEX](https://user-images.githubusercontent.com/3674090/44610184-aa879c00-a7ea-11e8-9772-408e807aea02.png)
-
-Delete all of the code above the found line.
-![DELETE_FOUND_CODE](https://user-images.githubusercontent.com/3674090/44610217-c4c17a00-a7ea-11e8-908d-b988644681e3.png)
-
-Save!
-
-
-3. Attach the PCI device to your VM
-	* In libvirt, use "+ Add Hardware" -> "PCI Host Device" to add the video card and audio device
-4. Edit the libvirt XML file for the VM and add the patched vbios file that we've generated
-
-````
-sudo virsh edit {VM Name}
-````
-````
-<hostdev>
-	...
-	<rom file='/var/lib/libvirt/vbios/patched-bios.bin'/>
-	...
-</hostdev>
-````
-5. Save and close the XML file
 
 ## Setting up Libvirt hooks
 
@@ -251,8 +205,7 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 ## Common issues
 ### Black Screen on VM Activation
 1. Make sure you've removed the Spice Video and QXL video adapter on the VM
-2. This can also be caused by Code 43 on nvidia GPUs. See [here](https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#%22Error_43:_Driver_failed_to_load%22_on_Nvidia_GPUs_passed_to_Windows_VMs) for troubleshooting that.
-3. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
+2. It can be extremely helpful to SSH into the host to check if scripts have executed properly, and that the VM is running. Try these in this order.
 	1. SSH into the host, and manually run the start script. If the start script runs properly, the host monitors should go completely black, and the terminal should return you to the prompt. 
 	2. If all goes well there, try running the vm manually using `sudo virsh start {vmname}`
 	3. If there is a problem here, typically the command will hang. That would signify a problem with the VM libvirt configuration. 
@@ -261,10 +214,6 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 
 ### Audio
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
-
-### failed to find/load romfile
-This problem is related to AppArmor move the patched bios file to a location libvirt can access (f.e. /usr/share/vgabios/bios.rom)
-[see](https://askubuntu.com/questions/985854/gpu-passthrough-problem-on-adding-dumped-rom)
 
 ## NOTE
 Either of these will require a user systemd service. You can keep user systemd services running by enabling linger for your user account like so:
