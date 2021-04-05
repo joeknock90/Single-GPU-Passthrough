@@ -13,7 +13,7 @@ For providing the vfio-pci-bind tool. A tool that is no longer used in this guid
 
 ### Matoking
 For the Nvidia ROM patcher. Making passing the boot gpu to the VM without GPU bios problems.
-Patching the rom is no longer required but I never would have written this guide without the original work so I'm keeping him here. 
+Patching the rom is no longer required but I never would have written this guide without the original work so I'm keeping them here. 
 
 ### Sporif
 For diagnosing, developing, and testing methods to successfully rebind the EFI-Framebuffer when passing the video card back to the host OS.
