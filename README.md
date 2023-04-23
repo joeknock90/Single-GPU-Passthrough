@@ -208,7 +208,10 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 	4. If you are returned to the prompt, check if the vm is in a running state by using `sudo virsh list`
 	5. If it's running fine, and you've made sure that you are not having the issue in step 1 and 2, yell at me in the issue tracker or reddit
 3. If you are encountering a black screen issue when running a virtual machine with single GPU passthrough, you may need to install a GPU driver on the virtual machine to resolve the problem or you need to wait for sometime to let Windows automatically install your GPU driver for you. If it doesn't you need to follow these steps:
-	1.
+	1. After installing Windows on the VM, you need to download two main things, the NVIDIA/AMD driver for your GPU (keep it somewhere closer, maybe on Desktop for convenience) and the Teamviewer application for Windows. Install the Teamviewer application and make sure it runs at startup.
+	2. Now make sure you have ticked two options "Start TeamViewer with Windows" and "Grant Easy Access (You may need to create an account)"
+	![alt text](https://imgur.com/a/VDqdRj0)
+	3. 
 
 ### Audio
 Check out the ArchWIKI entry for tips on audio. I've used both Pulseaudio Passthrough but am currently using a Scream IVSHMEM device on the VM. 
