@@ -18,5 +18,5 @@ echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
 sleep 2
 
 # Unbind the GPU from display driver
-virsh nodedev-detach pci_0000_0c_00_0
-virsh nodedev-detach pci_0000_0c_00_1
+virsh nodedev-detach pci_0000_01_00_0
+virsh nodedev-detach pci_0000_01_00_1
