@@ -191,8 +191,8 @@ This will keep services running even when your account is not logged in. I do no
 ## Personal Touches
 Here's a few things I do to make managing the host easier. 
 
-1. Start a VNC server on the host in the start script
-2. Set pulseaudio volume to 100%
+1. Isolate all but 1 core from host for more performance.
+2. Enable Remote Desktop on your VM and note down IP Address from Virt-Manager.
 3. Anything you want the host to do upon VM activation.
 
 
