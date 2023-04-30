@@ -1,30 +1,17 @@
-
-### If you go to reddit (specifically [r/vfio](https://www.reddit.com/r/vfio)) for help, try to mention [u/lellow_yedbetter](https://www.reddit.com/user/lellow_yedbetter/). You will probably get help faster from users in the sub, but it is easier for me to keep an eye on the github issues. 
-
 # Single GPU Passthrough on Linux  
-This guide is to help people through the process of using GPU Passthrough via libvirt/virt-manager on systems that only have one GPU. 
+This guide is to help people through the process of using GPU Passthrough via libvirt/virt-manager on Legion 5 Pro in Discrete Graphics Mode. 
 
 ## Special Thanks to:
 ### [The Passthrough post](https://passthroughpo.st)
 For hosting news and information about VFIO passthrough, and for the libvirt/qemu hook helper in this guide.
 
-### andre-ritcher
-For providing the vfio-pci-bind tool. A tool that is no longer used in this guide, but was previously used and he still deserves thanks.
-
-### Matoking
-For the Nvidia ROM patcher. Making passing the boot gpu to the VM without GPU bios problems.
-Patching the rom is no longer required but I never would have written this guide without the original work so I'm keeping them here. 
-
 ### Sporif
 For diagnosing, developing, and testing methods to successfully rebind the EFI-Framebuffer when passing the video card back to the host OS.
 
-### droidman
-For instructions on manually editing the vBIOS hex for use with VFIO passthrough
+### JoeKnock90 on Github.
+For providing the start and stop scripts that I used to bind and unbind the gpu dynamically. This repo was forked from his original one and repurposed for mostly personal reference when implementing vfio on the Lenovo Legion 5 Pro.
 
-### [Yuri Alek](https://gitlab.com/YuriAlek/vfio)
-A guide that is no doubt better than mine. Learning a few things from his implementation that can help me out a bit. This guide depends on libvirt at the base where as his has implementations that do not. 
-
-#### So many other people and organizations I need to thank. If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
+#### If feel your name should be here, please contact me. Credit where credit is due is very important to me, and to making the Linux community a better place.
 
 ## Contents
 
@@ -38,24 +25,14 @@ A guide that is no doubt better than mine. Learning a few things from his implem
 # Disclaimer
 You are completely responsible for your hardware and software. This guide makes no guarentees that the process will work for you, or will not void your waranty on various parts or break your computer in some way. Everything from here on out is at your own risk. 
 
-# Background
-Historically, VFIO passthrough has been built on a very specific model. I.E.
-
-* 2 GPUs, 1 for the host, and one for the VM
-* 2 monitors *OR* a monitor with 2 inputs *OR* a KVM switch
-
-I personally, as well as some of you out there, might not have those things available. Maybe You've got a Mini-ITX build with no iGPU. Or maybe you're poor like me, and can't shell out for new computer components without some financial  planning before hand.
-
-Whatever your reason is. VFIO is still possible. But with caveats. Here's some advantages and disadvantages of this model.
-
-This setup model is a lot like dual booting, without actually rebooting.
-
 # Advantages
 * As already stated, this model only requires one GPU
 * The ability to switch back and forth between different OSes with FULL use of a discrete graphics processor (Linux on Host with full GPU, Windows 10 Guest with Full GPU, MacOS guest with full GPU)
 * Bragging rights
 * Could be faster than dual booting (this depends on your system)
 * Using virtual disk images (like qcow) gives you management of snapshots, making breaking your guest os easy to recover from.
+* Its really cool!!!
+* Near native performance. More performance than dual on laptop at least.
 
 # Disadvantages
 * Can only use one OS at a time.
@@ -66,21 +43,13 @@ This setup model is a lot like dual booting, without actually rebooting.
 * If you DO have a second video card, solutions like looking-glass are WAYYY more convenient and need active testing and development.
 * All VMs must be run as root. There are security considerations to be made there. This model requires a level of risk acceptance.
 
-For my personal use case. This model is worth it to me and it might be for you too!
+For my personal use case. This model is worth it to me and I just think its really really cool to do!
 
 # Prerequisites and Assumptions
 
 ## Assumptions
 This guide is going to assume a few things
-
-1. You have a system capable of VFIO passthrough. I.E. a processors that supports IOMMU, sane IOMMU groups, and etc.
-2. I am going to start in a place where you have a working libvirt config, or qemu script, that boots a guest OS without PCI devices passed through.
-
-I am not going to cover the basic setup of VFIO passthrough here. There are a lot of guides out there that cover the process from beginning to end.
-
-What I will say is that using the [Arch Wiki][arch_wiki] is your best bet.
-
-Follow the instructions found [here][arch_wiki]
+You have read and understood thouroughly/implemented vfio using the [Arch Wiki][arch_wiki].
 
 [arch_wiki]: https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF
 
@@ -122,9 +91,9 @@ Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/prepare/begin`
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
 ### Libvirt Hook Scripts]
-#### Do not copy my scripts. Use them as a template, but write your own. 
+Ensure that you have edited the pci ids according to the output of `lspci -nnk` to match your gpu. Otherwise the vfio-pci driver will not recognize and bind to your gpu.
 
-I've made my start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
+I've edited the start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
 
 
 ### Start Script
@@ -149,8 +118,8 @@ echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
 sleep 2
 
 # Unbind the GPU from display driver
-virsh nodedev-detach pci_0000_0c_00_0
-virsh nodedev-detach pci_0000_0c_00_1
+virsh nodedev-detach pci_0000_01_00_0  #Replace numbers with your specific pci id. Use lspci -nnk
+virsh nodedev-detach pci_0000_01_00_1  # This one too
 
 # Load VFIO Kernel Module  
 modprobe vfio-pci  
@@ -165,8 +134,8 @@ My stop script is ```/etc/libvirt/hooks/qemu.d/{VMName}/release/end/revert.sh```
 set -x
   
 # Re-Bind GPU to Nvidia Driver
-virsh nodedev-reattach pci_0000_0c_00_1
-virsh nodedev-reattach pci_0000_0c_00_0
+virsh nodedev-reattach pci_0000_01_00_1 #Replace id with your gpu id number. Use lspci -nnk.
+virsh nodedev-reattach pci_0000_01_00_0 #This too
 
 # Reload nvidia modules
 modprobe nvidia
@@ -231,6 +200,6 @@ Here's a few things I do to make managing the host easier.
 Let me know your success and failure stories. 
 
 
-#### [Fuel my coffee addiction or help me test new hardware](https://www.paypal.com/donate?business=87AQBT5TGFRJS&item_name=Github+Testing&currency_code=USD)
+#### [This guide was forked from joeknock90 and edited for Legion 5 Pro. Here's a link to send some support if you desire.](https://www.paypal.com/donate?business=87AQBT5TGFRJS&item_name=Github+Testing&currency_code=USD)
 #### Always appreciated, never required.
 
