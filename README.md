@@ -176,7 +176,7 @@ Logs can be found under /var/log/libvirt/qemu/[VM name].log
 	3. If there is a problem here, typically the command will hang. That would signify a problem with the VM libvirt configuration. 
 	4. If you are returned to the prompt, check if the vm is in a running state by using `sudo virsh list`
 	5. If it's running fine, and you've made sure that you are not having the issue in step 1 and 2, yell at me in the issue tracker or reddit
-3. On certain GPU's (like my 3070 Laptop GPU) the vfio driver does not bind to the device properly hence the guest cannot make proper use of the gpu. When I ran in hybrid mode with the iGPU enabled I noticed lower performance in games or outright crashing. In single-gpu mode it seems the problem is a blackscreen as soon as the display is handed off to the gpu. The solution is to send your gpu vbios explicitly through the xml. 
+3. **My 3070 Laptop GPU does not work well with the vfio driver hence it does not bind to the device properly and the guest cannot make proper use of the gpu. When I ran in hybrid mode with the iGPU enabled I noticed lower performance in games or outright crashing. In single-gpu mode it seems the problem is a blackscreen as soon as the display is handed off to the gpu. The solution is to send your gpu vbios explicitly through the xml. I have uploaded a rom file I got from TechPowerUp. I will upload my own VBIOS later. It is recommended that you dump the vbios for your own gpu and use it for best compatibility and security. **
 `<rom file='path/to/file'/>`
 
 ### Audio
