@@ -1,25 +1,23 @@
 #!/bin/bash
-# Helpful to read output when debugging
 set -x
+  
+# Re-Bind GPU to Nvidia Driver
+virsh nodedev-reattach pci_0000_01_00_1 #Replace id with your gpu id number. Use lspci -nnk.
+virsh nodedev-reattach pci_0000_01_00_0 #This too
 
-# Stop display manager
-systemctl stop display-manager.service
-## Uncomment the following line if you use GDM
-#killall gdm-x-session
+# Reload nvidia modules
+modprobe nvidia
+modprobe nvidia_modeset
+modprobe nvidia_uvm
+modprobe nvidia_drm
 
-# Unbind VTconsoles
-echo 0 > /sys/class/vtconsole/vtcon0/bind
-echo 0 > /sys/class/vtconsole/vtcon1/bind
+# Rebind VT consoles
+echo 1 > /sys/class/vtconsole/vtcon0/bind
+# Some machines might have more than 1 virtual console. Add a line for each corresponding VTConsole
+#echo 1 > /sys/class/vtconsole/vtcon1/bind
 
-# Unbind EFI-Framebuffer
-echo efi-framebuffer.0 > /sys/bus/platform/drivers/efi-framebuffer/unbind
+nvidia-xconfig --query-gpu-info > /dev/null 2>&1
+echo "efi-framebuffer.0" > /sys/bus/platform/drivers/efi-framebuffer/bind
 
-# Avoid a Race condition by waiting 2 seconds. This can be calibrated to be shorter or longer if required for your system
-sleep 2
-
-# Unbind the GPU from display driver
-virsh nodedev-detach pci_0000_01_00_0  #Replace numbers with your specific pci id. Use lspci -nnk
-virsh nodedev-detach pci_0000_01_00_1  # This one too
-
-# Load VFIO Kernel Module  
-modprobe vfio-pci  
+# Restart Display Manager
+systemctl start display-manager.service
