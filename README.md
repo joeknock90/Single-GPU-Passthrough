@@ -67,7 +67,16 @@ With all this ready. Let's move on to how to actually do this.
 
 # Procedure
 
-## Setting up Libvirt hooks
+## Autommatic Install
+
+Just run the `setup-single-gpu-passthrough.sh` script as root:
+```
+sudo ./setup-single-gpu-passthrough.sh
+```
+It will take care of setting everything up. It automates the processes detailed below.  
+
+##Manual Install
+# Setting up Libvirt hooks
 
 Using libvirt hooks will allow us to automatically run scripts before the VM is started and after the VM has stopped.
 
