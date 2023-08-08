@@ -67,7 +67,7 @@ With all this ready. Let's move on to how to actually do this.
 
 # Procedure
 
-## Autommatic Install
+# Automatic Install
 
 Just run the `setup-single-gpu-passthrough.sh` script as root:
 ```
@@ -75,8 +75,8 @@ sudo ./setup-single-gpu-passthrough.sh
 ```
 It will take care of setting everything up. It automates the processes detailed below.  
 
-##Manual Install
-# Setting up Libvirt hooks
+# Manual Install
+## Setting up Libvirt hooks
 
 Using libvirt hooks will allow us to automatically run scripts before the VM is started and after the VM has stopped.
 
@@ -99,7 +99,7 @@ Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/prepare/begin`
 
 Anything in the directory ````/etc/libvirt/hooks/qemu.d/{VM Name}/release/end```` will run when your VM is stopped
 
-### Libvirt Hook Scripts]
+### Libvirt Hook Scripts
 Ensure that you have edited the pci ids according to the output of `lspci -nnk` to match your gpu. Otherwise the vfio-pci driver will not recognize and bind to your gpu.
 
 I've edited the start script ```/etc/libvirt/hooks/qemu.d/{VMName}/prepare/begin/start.sh```
