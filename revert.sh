@@ -2,8 +2,8 @@
 set -x
   
 # Re-Bind GPU to Nvidia Driver
-virsh nodedev-reattach pci_0000_0c_00_1
-virsh nodedev-reattach pci_0000_0c_00_0
+virsh nodedev-reattach pci_0000_01_00_1 #Replace id with your gpu id number. Use lspci -nnk.
+virsh nodedev-reattach pci_0000_01_00_0 #This too
 
 # Reload nvidia modules
 modprobe nvidia
